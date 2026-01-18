@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: shadow-market-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shadow
+      POSTGRES_PASSWORD: shadow
+      POSTGRES_DB: shadow_market
+    ports:
+      - "5432:5432"
+    volumes:
+      - shadow_market_data:/var/lib/postgresql/data
+    networks:
+      - shadow-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shadow-market-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://shadow:shadow@postgres:5432/shadow_market
+    depends_on:
+      - postgres
+    networks:
+      - shadow-network
+
+volumes:
+  shadow_market_data:
+
+networks:
+  shadow-network:
+    driver: bridge
