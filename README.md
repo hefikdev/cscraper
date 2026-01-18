@@ -3,27 +3,40 @@
 System do masowego pozyskiwania leadów z publicznych wyników Google (Dorking) i fragmentów Facebooka. Dane trafiają do kwarantanny w `raw_leads`, gdzie następuje deduplikacja po `phone_normalized`.
 
 ## Wymagania
-- Node.js 20+
 - Docker + Docker Compose
 - Klucze API: SerpAPI (Google + Facebook Profile) i Gemini
 
 ## Konfiguracja
-1. Skopiuj [./.env.example](.env.example) do .env i uzupełnij wartości.
-2. Uruchom bazę danych:
-	 - docker compose up -d
-3. Wygeneruj i wypchnij schemat Drizzle:
-	 - npm run db:generate
-	 - npm run db:push
+1. Skopiuj `.env.example` do `.env` i uzupełnij wartości (DATABASE_URL, SERPAPI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY)
+2. Zbuduj i uruchom kontenery:
+	 ```bash
+	 docker compose up -d --build
+	 ```
+3. Aplikacja będzie dostępna pod adresem http://localhost:3000
+4. PostgreSQL będzie dostępny pod adresem localhost:5432
 
-## Uruchomienie aplikacji
-1. npm run dev
-2. Otwórz http://localhost:3000
+## Uruchomienie aplikacji w produkcji
+Aplikacja działa w trybie produkcyjnym wewnątrz kontenera Docker (Node.js Alpine).
+- **Uruchomienie:** `docker compose up -d`
+- **Zatrzymanie:** `docker compose down`
+- **Logi:** `docker compose logs -f app`
+- **Restart:** `docker compose restart app`
 
 ## Uruchomienie scrapera
 Scraper korzysta z SerpAPI + Gemini i zapisuje dane do `raw_leads`.
 Gdy wynik wskazuje na profil Facebooka, wykonywane jest dodatkowe zapytanie
 `engine=facebook_profile` (SerpAPI) w celu wzbogacenia danych. W razie błędu
 pipeline kontynuuje na podstawie danych z Google.
+
+**Uwaga:** Scraper nie jest jeszcze zintegrowany z Dockerem - uruchamiaj go lokalnie po zainstalowaniu zależności (`npm install`):
+- Dla jobu zapisanego w UI:
+	```bash
+	npm run scrape -- --jobId=1
+	```
+- Dla parametrów ręcznych:
+	```bash
+	npm run scrape -- --wojewodztwo=mazowieckie --city=Warszawa --campType=Półkolonie --category=jeździeckie
+	```
 
 ## Ręczna kategoryzacja danych (UI)
 Na stronie głównej w sekcji "Ostatnie leady" znajduje się przycisk
@@ -43,11 +56,6 @@ niedzakurowanych leadach. Dla każdego leada model Gemini:
 
 Dzięki temu możesz szybko poprawić błędne kategorie i oznaczyć zweryfikowane
 organizacje. 🔎✅
-
-- Dla jobu zapisanego w UI:
-	- npm run scrape -- --jobId=1
-- Dla parametrów ręcznych:
-	- npm run scrape -- --wojewodztwo=mazowieckie --city=Warszawa --campType=Półkolonie --category=jeździeckie
 
 ## Struktura danych
 - Kwarantanna leadów: `raw_leads`
